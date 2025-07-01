@@ -1,0 +1,73 @@
+基于官方仓库中的commit 0bf3b0bfa5f378bee86f5d328af6e4af86ae0e17
+
+在buildroot中使能v4l2-ctl工具
+
+1. 进入buildroot的编译目录
+cd buildroot/output/milkv-duos-musl-riscv64-sd
+
+2. 打开menuconfig
+make menuconfig
+
+3. 按'/'键搜索libv4l
+
+4. 选中 libv4l 和 v4l-utils tools
+[*] libv4l              
+    *** libv4l JPEG support not enabled ***          
+[*]   v4l-utils tools
+
+5. save && make savedefconfig
+
+6. 运行如下命令
+make libv4l-dirclean && make libv4l-rebuild
+
+7. build_all && pack_sd_image
+
+8. 使用`install/`目录下生成的镜像(install/soc_sg2000_milkv_duos_musl_riscv64_sd/milkv-duos-musl-riscv64-sd.img)
+
+
+
+
+
+驱动编译流程：
+在duo-buildroot-sdk-v2目录下
+source ./build/envsetup_milkv.sh
+cd ./sg2000_video
+make
+将编译后的sg2000_video_debug.ko保存到milkv duos的root目录下
+
+
+
+判断v4l2-ctl模块是否正常使用
+v4l2-ctl --version
+
+加载
+insmod sg2000_video_debug.ko 
+
+查看是否加载成功
+v4l2-ctl --list-devices
+
+查看设备信息
+v4l2-ctl -d /dev/video0 --all
+
+查询支持的格式
+v4l2-ctl --device=/dev/video0 --list-formats-ext
+
+查询 V4L2 设备当前视频格式
+v4l2-ctl --device=/dev/video0 --get-fmt-video
+
+设置视频格式
+v4l2-ctl --set-fmt-video=width=240,height=240,pixelformat=YUYV
+
+设置后可以再次查询，查看设置结果：
+v4l2-ctl --device=/dev/video0 --get-fmt-video
+
+获取数据流：
+v4l2-ctl --device=/dev/video0 --stream-mmap=0 --stream-count=1 --stream-to=output-240x240.raw
+
+使用ffmpeg转换成jpg查看图片。
+ffmpeg -pix_fmt yuyv422 -s 240x240 -i output-240x240.raw result-240-240.jpg
+
+
+卸载：
+rmmod sg2000_video_debug.ko
+
